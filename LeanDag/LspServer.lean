@@ -9,7 +9,7 @@ public meta import LeanDag.InfoTreeParser
 public import LeanDag.NameUtils
 public import LeanDag.Conversion
 public import LeanDag.DiffComputation
-public import LeanDag.DagBuilder
+public meta import LeanDag.DagBuilder
 
 @[expose] public section
 
@@ -34,7 +34,7 @@ structure GetProofDagResult where
 
 /-! ## RPC Handler -/
 
-def handleGetProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) := do
+meta def handleGetProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) := do
   let doc ← RequestM.readDoc
   let utf8Pos := doc.meta.text.lspPosToUtf8Pos params.position
   IO.eprintln s!"[RPC] getProofDag mode={params.mode} pos={params.position} utf8={utf8Pos} uri={doc.meta.uri}"
@@ -76,8 +76,8 @@ Get proof DAG for the current position in a document.
 This RPC method is registered via `@[server_rpc_method]` for library mode
 (when users `import LeanDag` in their Lean files).
 -/
--- @[server_rpc_method]
-def getProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) :=
+@[server_rpc_method]
+meta def getProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) :=
   handleGetProofDag params
 
 /-! ## Standalone Binary Support
