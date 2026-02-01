@@ -1,4 +1,8 @@
-import Lean.Util.Path
+module
+
+public import Lean.Util.Path
+
+@[expose] public section
 
 /-!
 # Environment Discovery

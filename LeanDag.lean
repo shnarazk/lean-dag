@@ -1,6 +1,10 @@
-import LeanDag.Types
-import LeanDag.LspServer
-import LeanDag.Environment
+module
+
+public import LeanDag.Types
+public import LeanDag.LspServer
+public import LeanDag.Environment
+
+@[expose] public section
 
 /-!
 # LeanDag
