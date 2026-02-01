@@ -1,6 +1,10 @@
-import LeanDag.Types
-import LeanDag.NameUtils
-import LeanDag.InfoTreeParser
+module
+
+public import LeanDag.Types
+public import LeanDag.NameUtils
+public import LeanDag.InfoTreeParser
+
+@[expose] public section
 
 namespace LeanDag
 

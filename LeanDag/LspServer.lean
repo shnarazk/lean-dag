@@ -1,13 +1,17 @@
-import Lean
-import Lean.Server.FileWorker
-import Lean.Server.Watchdog
-import Lean.Server.Requests
-import LeanDag.Types
-import LeanDag.InfoTreeParser
-import LeanDag.NameUtils
-import LeanDag.Conversion
-import LeanDag.DiffComputation
-import LeanDag.DagBuilder
+module
+
+public import Lean
+public import Lean.Server.FileWorker
+public import Lean.Server.Watchdog
+public import Lean.Server.Requests
+public import LeanDag.Types
+public meta import LeanDag.InfoTreeParser
+public import LeanDag.NameUtils
+public import LeanDag.Conversion
+public import LeanDag.DiffComputation
+public import LeanDag.DagBuilder
+
+@[expose] public section
 
 open Lean Elab Server Lsp JsonRpc
 open Lean.Server.FileWorker Lean.Server.Snapshots
@@ -72,7 +76,7 @@ Get proof DAG for the current position in a document.
 This RPC method is registered via `@[server_rpc_method]` for library mode
 (when users `import LeanDag` in their Lean files).
 -/
-@[server_rpc_method]
+-- @[server_rpc_method]
 def getProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) :=
   handleGetProofDag params
 

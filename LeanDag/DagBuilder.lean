@@ -1,8 +1,12 @@
-import Lean
-import LeanDag.Types
-import LeanDag.InfoTreeParser
-import LeanDag.Conversion
-import LeanDag.DiffComputation
+module
+
+public import Lean
+public import LeanDag.Types
+public import LeanDag.InfoTreeParser
+public import LeanDag.Conversion
+public import LeanDag.DiffComputation
+
+@[expose] public section
 
 open Lean Elab
 

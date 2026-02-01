@@ -1,7 +1,11 @@
-import Lean
-import Lean.Meta.Basic
-import Lean.Meta.CollectMVars
-import LeanDag.Types
+module
+
+public import Lean
+public import Lean.Meta.Basic
+public import Lean.Meta.CollectMVars
+public import LeanDag.Types
+
+@[expose] public section
 
 open Lean Elab Server Lean.Elab
 

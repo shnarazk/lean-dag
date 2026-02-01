@@ -1,12 +1,16 @@
-import LeanDag.Types
-import Std.Data.HashMap
-import Std.Data.HashSet
+module
+
+public import LeanDag.Types
+public import Std.Data.HashMap
+public import Std.Data.HashSet
+
+@[expose] public section
 
 namespace LeanDag
 
 /-! ## Diff Computation -/
 
-private def diffHypotheses (source target : List HypothesisInfo)
+def diffHypotheses (source target : List HypothesisInfo)
     (changedTag : DiffTag) (missingTag : DiffTag) (markRemoved : Bool) : List HypothesisInfo :=
   let targetIds := Std.HashSet.ofList (target.map (·.id))
   let targetById : Std.HashMap String HypothesisInfo :=
@@ -24,7 +28,7 @@ private def diffHypotheses (source target : List HypothesisInfo)
     else
       { h with type := h.type.withDiff missingTag }
 
-private def diffGoals (source target : List GoalInfo)
+def diffGoals (source target : List GoalInfo)
     (changedTag : DiffTag) (missingTag : DiffTag) (markRemoved : Bool) : List GoalInfo :=
   let targetIds := Std.HashSet.ofList (target.map (·.id))
   let targetById : Std.HashMap String GoalInfo :=

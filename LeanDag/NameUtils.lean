@@ -1,9 +1,13 @@
+module
+
+@[expose] public section
+
 namespace LeanDag
 
 /-! ## Name Filtering -/
 
 /-- Check if pattern is a substring of s by splitting. -/
-private def containsSubstr (s pattern : String) : Bool :=
+def containsSubstr (s pattern : String) : Bool :=
   (s.splitOn pattern).length > 1
 
 def isHygienicName (s : String) : Bool :=
