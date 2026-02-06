@@ -104,15 +104,15 @@ def runWithLeanDag (action : IpcM α) : IO α := do
   Ipc.runWith "sh" #["-c",
     s!"cd {projectDir} && unset LEAN_PATH LEAN_SYSROOT && exec lake env sh -c 'LEAN_WORKER_PATH={serverPath} exec {serverPath}'"] action
 
-def parseProofDag (json : Json) : Except String ProofDag :=
+def parseCompleteProofDag (json : Json) : Except String CompleteProofDag :=
   match json.getObjVal? "proofDag" with
   | .ok dagJson => FromJson.fromJson? dagJson
   | .error e => .error s!"Missing proofDag field: {e}"
 
 /-- Get proof DAG at position. Line/col are 1-indexed (editor style). -/
-def getProofDagAt (uri : String) (sessionId : UInt64) (line col : Nat) (requestId : Nat) : IpcM (Option ProofDag) := do
-  let result ← callRpc requestId sessionId uri line col "LeanDag.getProofDag" (Json.mkObj [("mode", "tree")])
-  match parseProofDag result with
+def getCompleteProofDagAt (uri : String) (sessionId : UInt64) (line col : Nat) (requestId : Nat) : IpcM (Option CompleteProofDag) := do
+  let result ← callRpc requestId sessionId uri line col "LeanDag.getCompleteProofDag" (Json.mkObj [("mode", "tree")])
+  match parseCompleteProofDag result with
   | .ok dag => return some dag
   | .error _ => return none
 

@@ -1,0 +1,663 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wvhulle/lean-dag/protocol-schema.json",
+  "title": "LeanDag TUI Protocol",
+  "description": "JSON protocol for communication between lean-dag and lean-tui. All field names use snake_case convention. Discriminator fields: 'type' for message/command variants (following LSP conventions), 'kind' for tagged text variants (following Lean's internal TaggedText structure). Messages are newline-delimited JSON objects.",
+  "$defs": {
+    "LineCharacterPosition": {
+      "type": "object",
+      "description": "A position in a text document following the Language Server Protocol specification. Both line and character are zero-indexed. The character offset is measured in UTF-16 code units, which matters when dealing with unicode characters outside the Basic Multilingual Plane.",
+      "x-field-order": ["line", "character"],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed line number in the document. The first line is line 0."
+        },
+        "character": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed character offset within the line, measured in UTF-16 code units. For ASCII text, this equals the column number minus one."
+        }
+      },
+      "required": [
+        "line",
+        "character"
+      ],
+      "additionalProperties": false
+    },
+    "FullyQualifiedDocumentPosition": {
+      "type": "object",
+      "description": "A fully-qualified position within a document, combining a file URI with a line/character position. Used when referencing locations across different files in the workspace.",
+      "x-field-order": ["uri", "position"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URI of the document, typically a file:// URI pointing to a Lean source file in the workspace."
+        },
+        "position": {
+          "$ref": "#/$defs/LineCharacterPosition",
+          "description": "The position within the document specified by the URI."
+        }
+      },
+      "required": [
+        "uri",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "ServerOperatingMode": {
+      "type": "string",
+      "enum": [
+        "Library",
+        "Standalone"
+      ],
+      "description": "Indicates how the lean-dag server is running. 'Library' mode uses 'lake serve' and requires the target project to have 'import LeanDag' in its source files. 'Standalone' mode uses the lean-dag binary directly and works without any imports, but may have reduced functionality."
+    },
+    "SubexpressionDiffTag": {
+      "type": "string",
+      "enum": [
+        "wasChanged",
+        "willChange",
+        "wasDeleted",
+        "willDelete",
+        "wasInserted",
+        "willInsert"
+      ],
+      "description": "Describes how a subexpression differs between the proof state before and after a tactic application. The 'was*' variants indicate changes visible in the 'before' view, while 'will*' variants indicate changes visible in the 'after' view. Used by the TUI to render diff highlighting with appropriate colors."
+    },
+    "SubexpressionAnnotation": {
+      "type": "object",
+      "description": "Metadata attached to a subexpression within a tagged text tree. Currently contains only diff information, but may be extended with additional subexpression metadata in the future (e.g., hover information, semantic tokens).",
+      "x-field-order": ["diff_status"],
+      "properties": {
+        "diff_status": {
+          "$ref": "#/$defs/SubexpressionDiffTag",
+          "description": "The diff status of this subexpression, indicating whether and how it changed between proof states. Null or absent if the subexpression is unchanged."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnnotatedTextTree": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "A leaf node containing plain text with no nested structure or annotations.",
+          "x-field-order": ["kind", "text"],
+          "properties": {
+            "kind": {
+              "const": "text"
+            },
+            "text": {
+              "type": "string",
+              "description": "The raw text content to display. May contain whitespace and newlines."
+            }
+          },
+          "required": [
+            "kind",
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "An internal node that concatenates multiple child elements. Used to build complex expressions from smaller parts while preserving the tree structure.",
+          "x-field-order": ["kind", "children"],
+          "properties": {
+            "kind": {
+              "const": "append"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AnnotatedTextTree"
+              },
+              "description": "The child elements to concatenate in order. The final displayed text is the concatenation of all children's text content."
+            }
+          },
+          "required": [
+            "kind",
+            "children"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "A tagged node that wraps content with subexpression metadata. Used to attach diff highlighting and other annotations to specific parts of an expression.",
+          "x-field-order": ["kind", "subexpression_info", "tagged_content"],
+          "properties": {
+            "kind": {
+              "const": "tag"
+            },
+            "subexpression_info": {
+              "$ref": "#/$defs/SubexpressionAnnotation",
+              "description": "Metadata for this subexpression, including diff status for before/after highlighting."
+            },
+            "tagged_content": {
+              "$ref": "#/$defs/AnnotatedTextTree",
+              "description": "The wrapped content that this tag applies to. Can be any variant, allowing for nested tags."
+            }
+          },
+          "required": [
+            "kind",
+            "subexpression_info",
+            "tagged_content"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "A recursive tree structure for rich text with optional annotations per subexpression. Mirrors Lean's internal TaggedText type and supports diff highlighting for before/after proof state comparison."
+    },
+    "NavigationTargetLocation": {
+      "type": "object",
+      "description": "A navigation target for go-to-definition or go-to-type-definition commands. Contains the file URI and position where the definition or type is located.",
+      "x-field-order": ["uri", "position"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URI of the file containing the definition. Typically a file:// URI pointing to a Lean source file."
+        },
+        "position": {
+          "$ref": "#/$defs/LineCharacterPosition",
+          "description": "The position within the file where the definition starts, typically at the beginning of the identifier."
+        }
+      },
+      "required": [
+        "uri",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "PreresolvedNavigationTargets": {
+      "type": "object",
+      "description": "Pre-resolved navigation locations for an expression, hypothesis, or goal. These are computed eagerly when building the proof DAG so the TUI can navigate without additional server round-trips.",
+      "x-field-order": ["definition", "type_definition"],
+      "properties": {
+        "definition": {
+          "$ref": "#/$defs/NavigationTargetLocation",
+          "description": "The location of the definition of this term. For a hypothesis, this points to where the hypothesis was introduced. For a goal type, this points to the type's definition."
+        },
+        "type_definition": {
+          "$ref": "#/$defs/NavigationTargetLocation",
+          "description": "The location of the type's definition. For a term of type T, this points to where T is defined. Useful for navigating to the structure or inductive type definition."
+        }
+      },
+      "additionalProperties": false
+    },
+    "BindingKind": {
+      "type": "string",
+      "enum": [
+        "let_bind",
+        "fun_param",
+        "match_var",
+        "for_var"
+      ],
+      "description": "The kind of binding in term-mode code. 'let_bind' is a let-binding, 'fun_param' is a function parameter, 'match_var' is a pattern match variable, 'for_var' is a for-loop variable."
+    },
+    "LocalBinding": {
+      "type": "object",
+      "description": "Information about a local binding (variable) in term-mode code. Analogous to ProofContextHypothesis but for functional programming context.",
+      "x-field-order": ["name", "id", "binding_kind", "type", "value", "is_implicit", "is_instance", "is_removed", "navigation_locations"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The user-visible name of the binding as it appears in the code."
+        },
+        "type": {
+          "$ref": "#/$defs/AnnotatedTextTree",
+          "description": "The type of the binding as an annotated text tree with diff highlighting."
+        },
+        "value": {
+          "$ref": "#/$defs/AnnotatedTextTree",
+          "description": "For let-bindings with explicit values, the bound expression. Null for function parameters or pattern match variables."
+        },
+        "id": {
+          "type": "string",
+          "description": "A unique internal identifier for tracking this binding across expression nodes."
+        },
+        "binding_kind": {
+          "$ref": "#/$defs/BindingKind",
+          "description": "The kind of binding (let, function parameter, match variable, etc.)."
+        },
+        "is_implicit": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this binding is implicit (e.g., {α : Type})."
+        },
+        "is_instance": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this binding is a typeclass instance (e.g., [Monad m])."
+        },
+        "is_removed": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this binding goes out of scope. Used for diff display."
+        },
+        "navigation_locations": {
+          "$ref": "#/$defs/PreresolvedNavigationTargets",
+          "description": "Pre-resolved go-to-definition and go-to-type-definition locations for this binding."
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "id",
+        "binding_kind"
+      ],
+      "additionalProperties": false
+    },
+    "DisplayStyle": {
+      "type": "string",
+      "enum": [
+        "proof",
+        "dataflow",
+        "effectflow"
+      ],
+      "description": "The display style determines which TUI mode renders this DAG. 'proof' for tactic-based proof visualization, 'dataflow' for term-mode expression data flow, 'effectflow' for monadic effect flow visualization."
+    },
+    "GraphEdge": {
+      "type": "object",
+      "description": "A directed edge in the graph with optional label and attributes. Used to connect nodes in the unified graph representation.",
+      "x-field-order": ["target", "label", "kind", "attributes"],
+      "properties": {
+        "target": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Target node ID this edge points to."
+        },
+        "label": {
+          "type": "string",
+          "description": "Edge label (e.g., binding name for data flow, branch label for control flow, hypothesis dependency for proofs)."
+        },
+        "kind": {
+          "type": "string",
+          "description": "Edge kind whose interpretation depends on display style."
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": true,
+          "default": {},
+          "description": "Display-style-specific attributes as key-value pairs."
+        }
+      },
+      "required": ["target"],
+      "additionalProperties": false
+    },
+    "GraphNode": {
+      "type": "object",
+      "description": "A node in the unified graph with content, edges, and extensible metadata. Used by all display styles (proof, dataflow, effectflow).",
+      "x-field-order": ["id", "content", "kind", "position", "edges", "parent", "depth", "metadata"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Unique identifier for this node within the graph."
+        },
+        "content": {
+          "$ref": "#/$defs/AnnotatedTextTree",
+          "description": "Primary content (tactic text, expression, effect operation, etc.)."
+        },
+        "kind": {
+          "type": "string",
+          "description": "Node kind whose interpretation depends on display style."
+        },
+        "position": {
+          "$ref": "#/$defs/LineCharacterPosition",
+          "description": "Source position where this node's expression/tactic appears."
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphEdge"
+          },
+          "default": [],
+          "description": "Outgoing edges to child/dependent nodes."
+        },
+        "parent": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Parent node ID. Null for root nodes."
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Depth in the tree/DAG structure."
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "default": {},
+          "description": "Display-style-specific data."
+        }
+      },
+      "required": ["id", "content", "position"],
+      "additionalProperties": false
+    },
+    "GenericDag": {
+      "type": "object",
+      "description": "Unified DAG representation that can express proof trees, data flow graphs, and effect flow graphs. The display_style field determines which TUI mode renders this DAG and how to interpret the metadata.",
+      "x-field-order": ["display_style", "definition_name", "definition_type", "initial_context", "nodes", "root_node_id", "current_node_id", "orphans", "metadata"],
+      "properties": {
+        "display_style": {
+          "$ref": "#/$defs/DisplayStyle",
+          "description": "Which display mode should render this DAG."
+        },
+        "definition_name": {
+          "type": "string",
+          "description": "The fully qualified name of the definition being visualized."
+        },
+        "definition_type": {
+          "$ref": "#/$defs/AnnotatedTextTree",
+          "description": "The type/signature of the definition."
+        },
+        "initial_context": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocalBinding"
+          },
+          "default": [],
+          "description": "Initial hypotheses (for proof mode) or bindings (for term-mode) available at the start."
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphNode"
+          },
+          "default": [],
+          "description": "All nodes in the graph."
+        },
+        "root_node_id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The node ID of the root node."
+        },
+        "current_node_id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The node ID closest to the cursor position."
+        },
+        "orphans": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "default": [],
+          "description": "Node IDs that don't have a parent in the tree structure."
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "default": {},
+          "description": "DAG-level metadata."
+        }
+      },
+      "required": ["display_style", "nodes"],
+      "additionalProperties": false
+    },
+    "EditorCursorPosition": {
+      "type": "object",
+      "description": "Information about the current cursor position in the editor. Sent from the editor to lean-dag to request proof information at that location.",
+      "x-field-order": ["uri", "position", "method"],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URI of the document where the cursor is positioned. Must match a file that has been opened in the LSP session."
+        },
+        "position": {
+          "$ref": "#/$defs/LineCharacterPosition",
+          "description": "The cursor position within the document, used to find the enclosing proof and current tactic."
+        },
+        "method": {
+          "type": "string",
+          "description": "The LSP method that triggered this cursor update (e.g., 'textDocument/hover', 'textDocument/definition'). Used for debugging and may influence response behavior."
+        }
+      },
+      "required": [
+        "uri",
+        "position",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "ServerToClientMessage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Sent when the TUI client first connects to the lean-dag server. Provides information about the server's operating mode, the port this worker is using, and the file it is handling.",
+          "x-field-order": ["type", "server_mode", "file_uri", "port", "port_range_min", "port_range_max"],
+          "properties": {
+            "type": {
+              "const": "Connected"
+            },
+            "server_mode": {
+              "$ref": "#/$defs/ServerOperatingMode",
+              "description": "The mode in which the server is running, affecting available features and how the client should interact."
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "The TCP port this worker's server is listening on. Each worker (handling one file) gets a unique port from the configured range."
+            },
+            "file_uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "The file URI this worker is handling. In library mode with per-worker ports, each file gets its own worker and port."
+            },
+            "port_range_min": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "The minimum port in the configured port range. Clients can scan this range to discover active workers."
+            },
+            "port_range_max": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "The maximum port in the configured port range. Clients can scan this range to discover active workers."
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Sent when the editor cursor moves to a new position. Allows the TUI to track cursor location even when no proof DAG is available.",
+          "x-field-order": ["type", "uri", "position", "method"],
+          "properties": {
+            "type": {
+              "const": "Cursor"
+            },
+            "uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "The URI of the document containing the cursor."
+            },
+            "position": {
+              "$ref": "#/$defs/LineCharacterPosition",
+              "description": "The new cursor position in the document."
+            },
+            "method": {
+              "type": "string",
+              "description": "The LSP method that triggered the cursor update."
+            }
+          },
+          "required": [
+            "type",
+            "uri",
+            "position",
+            "method"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Sent when an error occurs during proof DAG extraction or other server operations. The TUI should display the error message to the user.",
+          "x-field-order": ["type", "error"],
+          "properties": {
+            "type": {
+              "const": "Error"
+            },
+            "error": {
+              "type": "string",
+              "description": "A human-readable error message describing what went wrong. May include technical details for debugging."
+            }
+          },
+          "required": [
+            "type",
+            "error"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Unified DAG message - dispatches to appropriate TUI mode based on display_style. Can represent proof trees, data flow graphs, or effect flow graphs.",
+          "x-field-order": ["type", "uri", "position", "dag"],
+          "properties": {
+            "type": {
+              "const": "Dag"
+            },
+            "uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "The URI of the document containing the definition."
+            },
+            "position": {
+              "$ref": "#/$defs/LineCharacterPosition",
+              "description": "The cursor position that triggered this DAG extraction."
+            },
+            "dag": {
+              "$ref": "#/$defs/GenericDag",
+              "description": "The unified DAG representation. The display_style field determines which TUI mode renders it."
+            }
+          },
+          "required": [
+            "type",
+            "uri",
+            "position"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Sent when the editor focuses a file (e.g., via textDocument/didOpen or tab switch). Allows the TUI to immediately follow file switches without waiting for cursor movement.",
+          "x-field-order": ["type", "uri", "focused"],
+          "properties": {
+            "type": {
+              "const": "FileFocused"
+            },
+            "uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "The URI of the file that gained or lost focus."
+            },
+            "focused": {
+              "type": "boolean",
+              "description": "True if the file gained focus, false if it lost focus."
+            }
+          },
+          "required": [
+            "type",
+            "uri",
+            "focused"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "Messages sent from the lean-dag server to the lean-tui client. Each message is a single JSON object terminated by a newline."
+    },
+    "ClientToServerCommand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Request the editor to navigate to a specific position. Used when the user selects a navigation target in the TUI (e.g., go-to-definition on a hypothesis).",
+          "x-field-order": ["type", "uri", "position"],
+          "properties": {
+            "type": {
+              "const": "Navigate"
+            },
+            "uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "The URI of the file to navigate to."
+            },
+            "position": {
+              "$ref": "#/$defs/LineCharacterPosition",
+              "description": "The position within the file to place the cursor."
+            }
+          },
+          "required": [
+            "type",
+            "uri",
+            "position"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Explicitly request a proof DAG at a specific position. Deprecated: the server now sends proof DAGs automatically on hover events. Kept for backwards compatibility.",
+          "x-field-order": ["type", "uri", "position", "mode"],
+          "properties": {
+            "type": {
+              "const": "GetProofDag"
+            },
+            "uri": {
+              "type": "string",
+              "format": "uri",
+              "description": "The URI of the document to extract the proof from."
+            },
+            "position": {
+              "$ref": "#/$defs/LineCharacterPosition",
+              "description": "The position in the document to find the enclosing proof."
+            },
+            "mode": {
+              "type": "string",
+              "default": "tree",
+              "description": "The extraction mode. Currently only 'tree' is supported. Reserved for future DAG visualization modes."
+            }
+          },
+          "required": [
+            "type",
+            "uri",
+            "position"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Sent when the TUI client is ready to receive data. The server responds with the current cursor position and DAG if available. This allows late-connecting clients to receive the current state.",
+          "x-field-order": ["type"],
+          "properties": {
+            "type": {
+              "const": "Ready"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "Commands sent from the lean-tui client to the lean-dag server. Each command is a single JSON object terminated by a newline."
+    }
+  },
+  "type": "object",
+  "properties": {
+    "messages": {
+      "description": "Server-to-TUI messages, sent as newline-delimited JSON objects.",
+      "$ref": "#/$defs/ServerToClientMessage"
+    },
+    "commands": {
+      "description": "TUI-to-server commands, sent as newline-delimited JSON objects.",
+      "$ref": "#/$defs/ClientToServerCommand"
+    }
+  }
+}

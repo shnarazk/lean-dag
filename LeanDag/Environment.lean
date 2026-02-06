@@ -1,8 +1,5 @@
-module
-
-public import Lean.Util.Path
-
-@[expose] public section
+import Lean.Util.Path
+import LeanDag.Logging
 
 /-!
 # Environment Discovery
@@ -14,7 +11,6 @@ Instead of relying on the caller to set up LEAN_PATH and LEAN_SYSROOT via
 
 namespace LeanDag.Environment
 
-/-- Run `lake env printenv VAR` to get an environment variable as Lake would set it. -/
 def lakeEnvVar (varName : String) : IO (Option String) := do
   let output ← IO.Process.output {
     cmd := "lake"
@@ -26,29 +22,27 @@ def lakeEnvVar (varName : String) : IO (Option String) := do
   else
     return none
 
-/-- Discover LEAN_SYSROOT via `lake env printenv`, falling back to Lean.findSysroot. -/
 def discoverSysroot : IO System.FilePath := do
   match ← lakeEnvVar "LEAN_SYSROOT" with
   | some sysroot => pure ⟨sysroot⟩
   | none => Lean.findSysroot
 
-/-- Initialize environment: discover paths via `lake env printenv` if not already set. -/
 def initEnvironment : IO Unit := do
-  IO.eprintln "[LeanDag.Environment] Initializing environment..."
+  log! "[LeanDag.Environment] Initializing environment..."
 
   let existingSysroot ← IO.getEnv "LEAN_SYSROOT"
   let existingLeanPath ← IO.getEnv "LEAN_PATH"
 
   let (sysroot, leanPath) ← match existingSysroot with
     | some _ =>
-      IO.eprintln "[LeanDag.Environment] Using existing environment"
+      log! "[LeanDag.Environment] Using existing environment"
       pure (existingSysroot, existingLeanPath)
     | none =>
-      IO.eprintln "[LeanDag.Environment] Discovering environment via `lake env printenv`..."
+      log! "[LeanDag.Environment] Discovering environment via `lake env printenv`..."
       let discoveredSysroot ← discoverSysroot
       let discoveredPath ← lakeEnvVar "LEAN_PATH"
-      IO.eprintln s!"[LeanDag.Environment] Discovered LEAN_SYSROOT: {discoveredSysroot}"
-      IO.eprintln s!"[LeanDag.Environment] Discovered LEAN_PATH: {discoveredPath}"
+      log! s!"[LeanDag.Environment] Discovered LEAN_SYSROOT: {discoveredSysroot}"
+      log! s!"[LeanDag.Environment] Discovered LEAN_PATH: {discoveredPath}"
       pure (some discoveredSysroot.toString, discoveredPath)
 
   let sp := leanPath.map System.SearchPath.parse |>.getD []
@@ -58,6 +52,6 @@ def initEnvironment : IO Unit := do
   let fullPath := sp ++ [libDir]
 
   Lean.searchPathRef.set fullPath
-  IO.eprintln s!"[LeanDag.Environment] Search path set: {fullPath}"
+  log! s!"[LeanDag.Environment] Search path set: {fullPath}"
 
 end LeanDag.Environment

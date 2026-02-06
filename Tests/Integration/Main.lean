@@ -1,6 +1,3 @@
-import Tests.Unit.ProofDag
-import Tests.Unit.ProofState
-import Tests.Unit.FunctionalDag
 import Tests.Integration.Basic
 import Tests.Integration.ProofDag
 import Tests.Integration.Boundary
@@ -8,13 +5,8 @@ import Tests.Integration.Tactics
 import Tests.Integration.Unicode
 
 unsafe def main : IO Unit := do
-  IO.println "LeanDag Tests"
-  IO.println "============="
-
-  -- Unit tests (no external dependencies)
-  Tests.Unit.ProofDag.runTests
-  Tests.Unit.ProofState.runTests
-  Tests.Unit.FunctionalDag.runTests
+  IO.println "LeanDag Integration Tests"
+  IO.println "========================="
 
   -- RPC integration tests (require lean-dag binary)
   Tests.Integration.Basic.runTests
@@ -24,5 +16,5 @@ unsafe def main : IO Unit := do
   Tests.Integration.Unicode.runTests
 
   IO.println "\n══════════════════════════════════════════════════════════════"
-  IO.println "  All tests passed"
+  IO.println "  All integration tests passed"
   IO.println "══════════════════════════════════════════════════════════════"
