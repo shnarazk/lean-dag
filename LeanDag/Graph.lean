@@ -1,1 +1,3 @@
-import LeanDag.SearchExpression
+module
+
+public import LeanDag.SearchExpression

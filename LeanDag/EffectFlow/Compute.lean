@@ -1,10 +1,14 @@
-import Lean
-import Lean.Meta.Basic
-import LeanDag.Protocol
-import LeanDag.Logging
-import LeanDag.SearchExpression
-import LeanDag.NameUtils
-import LeanDag.EffectFlow.Traverse
+module
+
+public import Lean
+public import Lean.Meta.Basic
+public import LeanDag.Protocol
+public import LeanDag.Logging
+public import LeanDag.SearchExpression
+public import LeanDag.NameUtils
+public import LeanDag.EffectFlow.Traverse
+
+@[expose] public section
 
 /-!
 # Effect Flow DAG Computation

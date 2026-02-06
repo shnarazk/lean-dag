@@ -1,5 +1,9 @@
-import Lean
-import LeanDag.Protocol
+module
+
+public import Lean
+public import LeanDag.Protocol
+
+@[expose] public section
 
 /-!
 # Expression Search Utilities
@@ -63,14 +67,14 @@ def collectTermsAndPositions (infoTree : InfoTree)
 /-! ## Outermost Expression Finding -/
 
 /-- Filter and sort candidates by position, returning the outermost (earliest). -/
-private def selectOutermost (candidates : Array (CollectedTerm × Lsp.Position × Lsp.Position))
+def selectOutermost (candidates : Array (CollectedTerm × Lsp.Position × Lsp.Position))
     : Option CollectedTerm :=
   let sorted := candidates.insertionSort fun (_, s1, _) (_, s2, _) =>
     s1.line < s2.line || (s1.line == s2.line && s1.character < s2.character)
   sorted[0]?.map (·.1)
 
 /-- Check if a term's position range contains the cursor position. -/
-private def containsCursor (term : CollectedTerm) (text : FileMap) (cursor : Lsp.Position)
+def containsCursor (term : CollectedTerm) (text : FileMap) (cursor : Lsp.Position)
     : Option (CollectedTerm × Lsp.Position × Lsp.Position) :=
   match term.startPos, term.endPos with
   | some startPos, some endPos =>

@@ -1,11 +1,15 @@
-import Lean
-import Std.Internal.Async
-import LeanDag.Protocol
-import LeanDag.Logging
+module
+
+public import Lean
+public import Std.Internal.Async
+public import LeanDag.Protocol
+public import LeanDag.Logging
 
 open Lean
 open Std.Net
 open Std.Internal.IO.Async
+
+@[expose] public section
 
 namespace LeanDag
 

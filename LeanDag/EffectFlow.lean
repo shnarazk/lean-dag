@@ -1,5 +1,7 @@
-import LeanDag.EffectFlow.Types
-import LeanDag.EffectFlow.RuleRegistry
-import LeanDag.EffectFlow.MonadPatterns
-import LeanDag.EffectFlow.Traverse
-import LeanDag.EffectFlow.Compute
+module
+
+public import LeanDag.EffectFlow.Types
+public import LeanDag.EffectFlow.RuleRegistry
+public import LeanDag.EffectFlow.MonadPatterns
+public import LeanDag.EffectFlow.Traverse
+public import LeanDag.EffectFlow.Compute

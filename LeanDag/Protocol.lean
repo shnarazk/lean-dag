@@ -1,6 +1,10 @@
-import Lean
-import JsonSchemaToLean
+module
 
+public import Lean
+public import JsonSchemaToLean
+public import JsonSchemaToLean.Types
+
+@[expose] public section
 
 open Lean
 

@@ -1,5 +1,9 @@
-import Lean
-import LeanDag.DataFlow.Types
+module
+
+public import Lean
+public import LeanDag.DataFlow.Types
+
+@[expose] public section
 
 /-!
 # Data Flow Decomposition Rules

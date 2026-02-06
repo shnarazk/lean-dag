@@ -1,30 +1,34 @@
-import LeanDag.Protocol
-import LeanDag.SemanticTableau.Types
-import Std.Data.HashMap
-import Std.Data.HashSet
+module
+
+public import LeanDag.Protocol
+public import LeanDag.SemanticTableau.Types
+public import Std.Data.HashMap
+public import Std.Data.HashSet
+
+@[expose] public section
 
 namespace LeanDag.SemanticTableau
 
 /-! ## Diff Computation -/
 
 /-- Direction of diff comparison, determining which tags to use. -/
-private inductive DiffDirection where
+inductive DiffDirection where
   | before  -- Computing diff for "before" state (will change/delete, mark removed)
   | after   -- Computing diff for "after" state (was changed/inserted)
 
-private def DiffDirection.changedTag : DiffDirection → SubexpressionDiffTag
+def DiffDirection.changedTag : DiffDirection → SubexpressionDiffTag
   | .before => .willChange
   | .after => .wasChanged
 
-private def DiffDirection.missingTag : DiffDirection → SubexpressionDiffTag
+def DiffDirection.missingTag : DiffDirection → SubexpressionDiffTag
   | .before => .willDelete
   | .after => .wasInserted
 
-private def DiffDirection.markRemoved : DiffDirection → Bool
+def DiffDirection.markRemoved : DiffDirection → Bool
   | .before => true
   | .after => false
 
-private def diffHypotheses (source target : Array ProofContextHypothesis) (dir : DiffDirection)
+def diffHypotheses (source target : Array ProofContextHypothesis) (dir : DiffDirection)
     : Array ProofContextHypothesis :=
   let targetIds := Std.HashSet.ofArray (target.map (·.id))
   let targetById : Std.HashMap String ProofContextHypothesis :=
@@ -42,7 +46,7 @@ private def diffHypotheses (source target : Array ProofContextHypothesis) (dir :
     else
       { h with type := h.type.withDiff dir.missingTag }
 
-private def diffGoals (source target : Array ProofObligation) (dir : DiffDirection) : Array ProofObligation :=
+def diffGoals (source target : Array ProofObligation) (dir : DiffDirection) : Array ProofObligation :=
   let targetIds := Std.HashSet.ofArray (target.map (·.id))
   let targetById : Std.HashMap String ProofObligation :=
     target.foldl (init := {}) fun m g => m.insert g.id g

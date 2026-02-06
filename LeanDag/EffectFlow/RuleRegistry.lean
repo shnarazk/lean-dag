@@ -1,5 +1,9 @@
-import Lean
-import LeanDag.EffectFlow.Types
+module
+
+public import Lean
+public import LeanDag.EffectFlow.Types
+
+@[expose] public section
 
 /-!
 # Effect Flow Rule Registry

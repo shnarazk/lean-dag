@@ -1,11 +1,15 @@
-import Lean
-import Lean.Meta.Basic
-import LeanDag.Protocol
-import LeanDag.Graph
-import LeanDag.SearchExpression
-import LeanDag.Logging
-import LeanDag.DataFlow.Types
-import LeanDag.DataFlow.RuleRegistry
+module
+
+public import Lean
+public import Lean.Meta.Basic
+public import LeanDag.Protocol
+public import LeanDag.Graph
+public import LeanDag.SearchExpression
+public import LeanDag.Logging
+public import LeanDag.DataFlow.Types
+public import LeanDag.DataFlow.RuleRegistry
+
+@[expose] public section
 
 /-!
 # Functional DAG Computation
@@ -30,7 +34,7 @@ def ppGoalType (ctx : ContextInfo) (ty : Expr) : MetaM String :=
 
 /-! # Expression Traversal -/
 
-private def maxTraverseDepth : Nat := 20
+def maxTraverseDepth : Nat := 20
 
 /-- Recursively traverse an expression using rule-based decomposition.
     Returns a list of (ProtoNode, depth) pairs for all decomposed nodes. -/

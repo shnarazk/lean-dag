@@ -1,6 +1,10 @@
-import Lean
-import LeanDag.Protocol
-import LeanDag.Graph
+module
+
+public import Lean
+public import LeanDag.Protocol
+public import LeanDag.Graph
+
+@[expose] public section
 
 /-!
 # Effect Flow Core Types

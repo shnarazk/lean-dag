@@ -1,6 +1,10 @@
-import Lean
+module
 
-register_option leanDag.verbose : Bool := {
+public import Lean
+
+@[expose] public section
+
+public meta register_option leanDag.verbose : Bool := {
   defValue := false
   descr := "Enable verbose logging for LeanDag (source locations included)."
 }

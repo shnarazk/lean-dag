@@ -1,12 +1,14 @@
-import Lean
-import LeanDag.Protocol
-import LeanDag.DataFlow.Compute
-import LeanDag.DataFlow.Types
-import LeanDag.DataFlow.TermPatterns
-import LeanDag.EffectFlow.Compute
-import LeanDag.SemanticTableau.InfoTreeParser
-import LeanDag.SemanticTableau.Builder
-import LeanDag.NameUtils
+module
+
+public import Lean
+public import LeanDag.Protocol
+public import LeanDag.DataFlow.Compute
+public import LeanDag.DataFlow.Types
+public import LeanDag.DataFlow.TermPatterns
+public import LeanDag.EffectFlow.Compute
+public import LeanDag.SemanticTableau.InfoTreeParser
+public import LeanDag.SemanticTableau.Builder
+public import LeanDag.NameUtils
 
 /-!
 # DAG Generator
@@ -18,6 +20,8 @@ Shared classification and dispatch for computing a `GenericDag` from an
 open Lean Elab Server
 open LeanDag.SemanticTableau.InfoTreeParser (parseInfoTreePure)
 open LeanDag.SemanticTableau (GenericDag.buildProof)
+
+@[expose] public section
 
 namespace LeanDag.Generator
 

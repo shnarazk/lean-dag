@@ -1,10 +1,14 @@
-import Lean
+module
+
+public import Lean
+
+@[expose] public section
 
 open Lean Elab
 
 /-! ## Name Filtering -/
 
-private def containsSubstr (s pattern : String) : Bool :=
+def containsSubstr (s pattern : String) : Bool :=
   (s.splitOn pattern).length > 1
 
 def String.isHygienic (s : String) : Bool :=

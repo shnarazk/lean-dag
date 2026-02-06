@@ -1,8 +1,12 @@
-import Lean
-import Std.Data.HashMap
-import LeanDag.EffectFlow.RuleRegistry
-import LeanDag.EffectFlow.MonadPatterns
-import LeanDag.Logging
+module
+
+public import Lean
+public import Std.Data.HashMap
+public import LeanDag.EffectFlow.RuleRegistry
+public import LeanDag.EffectFlow.MonadPatterns
+public import LeanDag.Logging
+
+@[expose] public section
 
 /-!
 # Effect Flow Expression Traversal

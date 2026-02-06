@@ -1,7 +1,11 @@
-import Lean
-import LeanDag.Protocol
-import LeanDag.SemanticTableau.InfoTreeParser
-import LeanDag.SemanticTableau.DiffComputation
+module
+
+public import Lean
+public import LeanDag.Protocol
+public import LeanDag.SemanticTableau.InfoTreeParser
+public import LeanDag.SemanticTableau.DiffComputation
+
+@[expose] public section
 
 open Lean Elab
 

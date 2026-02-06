@@ -1,6 +1,10 @@
-import Lean
-import LeanDag.EffectFlow.RuleRegistry
-import LeanDag.NameUtils
+module
+
+public import Lean
+public import LeanDag.EffectFlow.RuleRegistry
+public import LeanDag.NameUtils
+
+@[expose] public section
 
 /-!
 # Built-in Effect Rules

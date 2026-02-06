@@ -1,5 +1,9 @@
-import Lean
-import LeanDag.Protocol
+module
+
+public import Lean
+public import LeanDag.Protocol
+
+@[expose] public section
 
 open Lean
 

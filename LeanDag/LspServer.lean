@@ -1,11 +1,16 @@
-import Lean
-import Lean.Server.FileWorker
-import Lean.Server.Watchdog
-import Lean.Server.Requests
-import LeanDag.Protocol
-import LeanDag.TcpServer
-import LeanDag.Generator
-import LeanDag.Logging
+module
+
+public import Lean
+public import Lean.Server.FileWorker
+public import Lean.Server.Watchdog
+public import Lean.Server.Requests
+public import LeanDag.Protocol
+public import LeanDag.TcpServer
+public import LeanDag.Generator
+public import LeanDag.Logging
+public import LeanDag.SearchExpression
+
+@[expose] public section
 
 open Lean Elab Server Lsp JsonRpc
 open Lean.Server.FileWorker Lean.Server.Snapshots
@@ -68,22 +73,32 @@ structure GetProofDagResult where
 
 /-! ## RPC Handler -/
 
-/-- Compute DAG from a snapshot using the shared Generator dispatch. -/
-def computeDag (snap : Snapshot) (position : Lsp.Position) : RequestM (Option GenericDag) := do
-  let doc ← RequestM.readDoc
-  let ctx : DagContext := { fileMap := doc.meta.text, fileUri := doc.meta.uri }
-  Generator.computeDag snap.infoTree position ctx
+-- /-- Compute DAG from a snapshot using the shared Generator dispatch. -/
+-- meta def computeDag (snap : Snapshot) (position : Lsp.Position) : RequestM (Option GenericDag) := do
+--   let doc ← RequestM.readDoc
+--   let ctx : DagContext := { fileMap := doc.meta.text, fileUri := doc.meta.uri }
+--   Generator.computeDag snap.infoTree position ctx
 
-@[server_rpc_method]
-def getProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) := do
-  RequestM.withWaitFindSnapAtPos params.position fun snap => do
-    match ← computeDag snap params.position with
-    | some dag => return { dag }
-    | none => return { dag := { displayStyle := .proof, nodes := #[], metadata := Json.mkObj [] } }
+-- @[server_rpc_method]
+-- meta def getProofDag (params : GetProofDagParams) : RequestM (RequestTask GetProofDagResult) := do
+--   RequestM.withWaitFindSnapAtPos params.position fun snap => do
+--     match ← computeDag snap params.position with
+--     | some dag => return { dag }
+--     | none => return { dag := { displayStyle := .proof, nodes := #[], metadata := Json.mkObj [] } }
 
 builtin_initialize
   Lean.Server.registerBuiltinRpcProcedure
-    `LeanDag.getProofDag GetProofDagParams GetProofDagResult getProofDag
+    `LeanDag.getProofDag GetProofDagParams GetProofDagResult -- getProofDag
+    (fun params ↦ do
+      RequestM.withWaitFindSnapAtPos params.position fun snap => do
+        let doc ← RequestM.readDoc
+        let ctx : DagContext := { fileMap := doc.meta.text, fileUri := doc.meta.uri }
+        let computeDag ← Generator.computeDag snap.infoTree params.position ctx
+        match /- ← -/ computeDag /- snap params.position -/ with
+        | some dag => return { dag }
+        | none => return { dag := { displayStyle := .proof, nodes := #[], metadata := Json.mkObj [] } }
+    )
+
 
 /-! ## DAG Broadcasting
 
@@ -109,7 +124,11 @@ def rebroadcastProofDag : RequestM (RequestTask Unit) := do
   let some srv ← ensureTuiServer (some (toString uri)) | return .pure ()
 
   RequestM.withWaitFindSnapAtPos position fun snap => do
-    let dag ← computeDag snap position
+    let doc ← RequestM.readDoc
+    let ctx : DagContext := { fileMap := doc.meta.text, fileUri := doc.meta.uri }
+    let dag ← Generator.computeDag snap.infoTree position ctx
+
+    -- let dag ← computeDag snap position
     broadcastDag srv uri position dag
 
 /-- Compute and broadcast proof DAG when hover request is received.
@@ -148,7 +167,11 @@ def broadcastProofDagOnHover (params : Lsp.HoverParams) : RequestM (RequestTask 
 
   -- Compute and broadcast DAG using cached elaboration
   RequestM.withWaitFindSnapAtPos position fun snap => do
-    let dag ← computeDag snap position
+    let doc ← RequestM.readDoc
+    let ctx : DagContext := { fileMap := doc.meta.text, fileUri := doc.meta.uri }
+    let dag ← Generator.computeDag snap.infoTree position ctx
+
+    -- let dag ← computeDag snap position
     broadcastDag srv uri position dag
 
 builtin_initialize

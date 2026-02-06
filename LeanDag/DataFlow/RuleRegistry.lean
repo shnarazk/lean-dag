@@ -1,5 +1,9 @@
-import Lean
-import LeanDag.DataFlow.Rule
+module
+
+public import Lean
+public import LeanDag.DataFlow.Rule
+
+@[expose] public section
 
 /-!
 # Data Flow Rule Registry

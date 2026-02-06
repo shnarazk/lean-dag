@@ -1,7 +1,10 @@
-import Lean
-import LeanDag.DataFlow.RuleRegistry
-import LeanDag.NameUtils
+module
 
+public import Lean
+public import LeanDag.DataFlow.RuleRegistry
+public import LeanDag.NameUtils
+
+@[expose] public section
 
 open Lean Meta
 

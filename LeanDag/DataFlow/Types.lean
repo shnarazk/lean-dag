@@ -1,8 +1,12 @@
-import Lean
-import LeanDag.Protocol
-import LeanDag.Graph
-import LeanDag.NameUtils
-import LeanDag.SearchExpression
+module
+
+public import Lean
+public import LeanDag.Protocol
+public import LeanDag.Graph
+public import LeanDag.NameUtils
+public import LeanDag.SearchExpression
+
+@[expose] public section
 
 /-!
 # Data Flow Decomposition Types

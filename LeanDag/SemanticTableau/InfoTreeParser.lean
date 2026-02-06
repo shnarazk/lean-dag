@@ -1,10 +1,14 @@
-import Lean
-import Lean.Meta.Basic
-import Lean.Meta.CollectMVars
-import LeanDag.Protocol
-import LeanDag.SearchExpression
-import LeanDag.SemanticTableau.Types
-import LeanDag.NameUtils
+module
+
+public import Lean
+public import Lean.Meta.Basic
+public import Lean.Meta.CollectMVars
+public import LeanDag.Protocol
+public import LeanDag.SearchExpression
+public import LeanDag.SemanticTableau.Types
+public import LeanDag.NameUtils
+
+@[expose] public section
 
 open Lean Elab Server Lean.Elab
 open LeanDag.SearchExpression (BinderCache NavigationContext buildBinderCache ppExprStr)

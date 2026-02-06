@@ -1,5 +1,9 @@
-import Lean.Util.Path
-import LeanDag.Logging
+module
+
+public import Lean.Util.Path
+public import LeanDag.Logging
+
+@[expose] public section
 
 /-!
 # Environment Discovery

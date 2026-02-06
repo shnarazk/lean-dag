@@ -1,8 +1,12 @@
-import LeanDag.DataFlow.Types
-import LeanDag.DataFlow.Rule
-import LeanDag.DataFlow.RuleRegistry
-import LeanDag.DataFlow.TermPatterns
-import LeanDag.DataFlow.Compute
+module
+
+public import LeanDag.DataFlow.Types
+public import LeanDag.DataFlow.Rule
+public import LeanDag.DataFlow.RuleRegistry
+public import LeanDag.DataFlow.TermPatterns
+public import LeanDag.DataFlow.Compute
+
+@[expose] public section
 
 /-!
 # Data Flow Decomposition Framework
